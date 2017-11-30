@@ -3,12 +3,12 @@ const express = require("express"),
   bodyParser = require("body-parser"),
   port = 3001,
   app = express(),
-  config = require("./config"),
+  
   session = require("express-session"),
   massive = require("massive");
-//        require('dotenv').config()
+  require('dotenv').config()
 
-massive(config.connection_string)
+massive(process.env.CONNECTION_STRING)
   .then(dbInstance => {
     const table = dbInstance.tables.find(c => c.name == "todos");
     if (!table) {
@@ -25,10 +25,20 @@ massive(config.connection_string)
   })
   .catch(console.log);
 
-app.use(session(config.session));
+  app.use(
+    session({
+      secret: process.env.SECRET,
+      resave: process.env.RESAVE,
+      saveUninitialized: process.env.SAVEUNINITIALIZED
+    })
+  );
+
 app.use(cors());
 app.use(bodyParser.json());
-app.use("/", express.static(__dirname));
+
+// need to add for hosting
+// remember to run npm run build 
+app.use("/", express.static(__dirname + "/../build"));
 
 app.get("/api/todos", (req, res) => {
   const db = req.app.get("db");
